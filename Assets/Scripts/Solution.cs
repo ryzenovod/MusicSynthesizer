@@ -4,15 +4,15 @@ using UnityEngine;
 
 public class Solution : MonoBehaviour
 {
-    private SceneControlScript controller;
+    public SceneControlScript controller;
     private bool solutionExecuted = false;
 
-    void Start()
+    public override void Start()
     {
         controller = gameObject.GetComponent<SceneControlScript>();
     }
 
-    void Update()
+    public override void Update()
     {
         if (!solutionExecuted && !controller.IsPlaying())
         {
