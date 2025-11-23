@@ -7,12 +7,12 @@ public class Solution : MonoBehaviour
     public SceneControlScript controller;
     private bool solutionExecuted = false;
 
-    public override void Start()
+    public void Start()
     {
         controller = gameObject.GetComponent<SceneControlScript>();
     }
 
-    public override void Update()
+    public void Update()
     {
         if (!solutionExecuted && !controller.IsPlaying())
         {
