@@ -1,59 +1,82 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using System;
+using System.IO;
 
-public class Solution : MonoBehaviour
+public class Solution
 {
-    public SceneControlScript controller;
-    private bool solutionExecuted = false;
-
-    public void Start()
+    public static void Main()
     {
-        controller = gameObject.GetComponent<SceneControlScript>();
+        // читаем все из input.txt
+        string text = File.ReadAllText("input.txt");
+        string[] parts = text.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+
+        long[] limits = new long[7];
+        for (int i = 0; i < 7; i++)
+            limits[i] = long.Parse(parts[i]);
+
+        long answer = Solve(limits);
+
+        // выводим в output.txt
+        File.WriteAllText("output.txt", answer.ToString());
     }
 
-    public void Update()
+    // Быстрое решение для 7 клавиш
+    private static long Solve(long[] limits)
     {
-        if (!solutionExecuted && !controller.IsPlaying())
+        const int totalNotes = 7;
+
+        // если первая нота уже с нулевым лимитом – играть нечем
+        if (limits[0] <= 0)
+            return 0;
+
+        // первое нажатие по позиции 0
+        limits[0]--;
+        long tacts = 1;
+
+        // период последовательности индексов (со 2-го нажатия)
+        int[] cycle = new int[]
         {
-            ExecuteSolution();
-            solutionExecuted = true;
-        }
-    }
+            2, 3, 5, 1, 6, 0, 6, 6, 5, 4, 2, 6, 1, 0, 1, 1
+        };
+        int period = cycle.Length;
 
-    private void ExecuteSolution()
-    {
-        int calculatedAnswer = CalculateTotalTacts();
+        // сколько раз за один период нажимается каждая клавиша
+        long[] freq = new long[totalNotes];
+        for (int i = 0; i < period; i++)
+            freq[cycle[i]]++;
 
-        controller.setAnswer(calculatedAnswer);
-    }
-
-    private int CalculateTotalTacts()
-    {
-        int totalNotes = controller.GetTotalNotes();
-        int[] limits = new int[totalNotes];
-
+        // максимальное количество целых периодов
+        long maxFullCycles = long.MaxValue;
         for (int i = 0; i < totalNotes; i++)
         {
-            limits[i] = controller.GetNoteLimit(i);
+            if (freq[i] > 0)
+            {
+                long possible = limits[i] / freq[i];
+                if (possible < maxFullCycles)
+                    maxFullCycles = possible;
+            }
         }
+        if (maxFullCycles == long.MaxValue)
+            maxFullCycles = 0;
 
-        int alpha = 1;
-        int beta = 1;
-        int currentPosition = 0;
-        int gamma = 0;
-
-        while (limits[currentPosition] > 0)
+        // применяем полные периоды
+        if (maxFullCycles > 0)
         {
-            limits[currentPosition]--;
-            gamma++;
-
-            int delta = (alpha + beta) % totalNotes;
-            alpha = beta;
-            beta = delta;
-            currentPosition = delta;
+            tacts += maxFullCycles * period;
+            for (int i = 0; i < totalNotes; i++)
+                limits[i] -= freq[i] * maxFullCycles;
         }
 
-        return gamma;
+        // хвост: добегаем по циклу, пока хватает лимитов
+        for (int i = 0; i < period; i++)
+        {
+            int note = cycle[i];
+            if (limits[note] == 0)
+                break;
+
+            limits[note]--;
+            tacts++;
+        }
+
+        return tacts;
     }
 }
